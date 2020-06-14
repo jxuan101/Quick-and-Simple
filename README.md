@@ -1,5 +1,7 @@
 # Quick-and-Simple
 ## **Dear fellow lazy people,**  
+_Note: This is made for the purpose of a quick and simple search and not for advanced searches. You still gotta do work for those._  
+  
 Let me lay out a scenario for you. Imagine that you had just started up your PC. You now want to watch a Youtube video or go on Google. To do that, you must   
 1. Open your browser.
 2. Click on the search bar (assuming you don't use Google Chrome or a favorites feature of any browser).
