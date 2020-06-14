@@ -302,7 +302,7 @@ if __name__ == '__main__':
     GGCOMBINATION = {keyboard.Key.alt_l, keyboard.KeyCode.from_char('z')}
     current = set()
 
-    def youtube_search(SysTrayIcon):
+    def youtube_search(*SysTrayIcon):
         global query
         global search_type
         current.clear()
@@ -315,7 +315,7 @@ if __name__ == '__main__':
             webbrowser.open('https://www.youtube.com/results?search_query=' + query, new=0)
         query = ""
 
-    def google_search(sysTrayIcon):
+    def google_search(*sysTrayIcon):
         global query
         global search_type
         current.clear()
@@ -337,25 +337,9 @@ if __name__ == '__main__':
         if key in YTCOMBINATION or key in GGCOMBINATION:
             current.add(key)
             if all(k in current for k in YTCOMBINATION):
-                current.clear()
-                search_type = "Search Youtube"
-                root = tk.Tk()
-                gui = Window(root)
-                root.mainloop()
-                query.replace(" ", "+")
-                if query != "":
-                    webbrowser.open('https://www.youtube.com/results?search_query=' + query, new=0)
-                query = ""
+                youtube_search()
             elif all(k in current for k in GGCOMBINATION):
-                current.clear()
-                search_type = "Search Google"
-                root = tk.Tk()
-                gui = Window(root)
-                root.mainloop()
-                query.replace(" ", "+")
-                if query != "":
-                    webbrowser.open('https://www.google.com/search?q=' + query, new=0)
-                query = ""
+                google_search()
 
     def on_release(key):
         try:
