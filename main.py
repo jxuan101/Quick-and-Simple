@@ -10,8 +10,9 @@ try:
 except ImportError:
     import win32gui
 import tkinter as tk
-import itertools, glob
 import webbrowser
+import requests
+
 
 query = ""
 search_type = ""
@@ -180,53 +181,118 @@ def non_string_iterable(obj):
     else:
         return not isinstance(obj, str)
 
-def search():
-    global search_type
+class Window:
+    def __init__(self, root):
+        self.root = root
+        global search_type
+        self.root.lift()
+        self.root.wm_attributes("-topmost", 1)
+        self.root.focus_force()
+        self.root.iconbitmap('./favicon.ico')
+        self.ws = self.root.winfo_screenwidth() # width of the screen
+        self.hs = self.root.winfo_screenheight() # height of the screen
+        self.root.geometry('%dx%d+%d+%d' % (380, 110, self.ws - 400, self.hs - 200))
+        self.root.title(search_type)
+        self.root.resizable(width=False, height=False)
+        self.form_entry = tk.Frame(master = self.root)
+        self.sv = tk.StringVar()
+        self.sv.trace("w", lambda name, index, mode, sv=self.sv: self.predictive_search(self.sv))
+        self.user_input = tk.Entry(master = self.form_entry, width = 50, textvariable=self.sv)
+        self.user_input.focus_set()
+        self.list_active = False
+        self.root.bind('<Return>', self.get_input)
+        self.root.bind('<Escape>', self.close)
+        self.root.bind("<FocusOut>", self.on_focus_out)
+        self.root.bind("<Up>", self.up)
+        self.root.bind("<Down>", self.down)
 
-    window = tk.Tk()
-    window.lift()
-    window.wm_attributes("-topmost", 1)
-    window.focus_force()
-    window.iconbitmap('./favicon.ico')
-    ws = window.winfo_screenwidth() # width of the screen
-    hs = window.winfo_screenheight() # height of the screen
-    window.geometry('%dx%d+%d+%d' % (380, 50, ws - 400, hs - 150))
-    window.title(search_type)
-    window.resizable(width=False, height=False)
-    form_entry = tk.Frame(master = window)
-    user_input = tk.Entry(master = form_entry, width = 50)
+        self.btn_search = tk.Button(master = self.form_entry,
+                            text = "Search",
+                            command = self.get_input)
 
-    def get_input(*args):
+        self.user_input.grid(row = 0, column = 0, sticky = "e")
+        self.btn_search.grid(row = 0, column = 1, padx = 10)
+        self.form_entry.grid(row = 0, column = 0, padx = 10, pady = 10)
+
+        self.root.mainloop()
+
+    def predictive_search(self, *args):
+        if self.sv.get() == '':
+            self.list_results.destroy()
+            self.list_active = False
+        else:
+            response = requests.get('http://suggestqueries.google.com/complete/search?client=firefox&ds=yt&q=' + self.sv.get())
+            decoded = response.json()
+            if len(decoded[1]) > 0:
+                if not self.list_active:
+                    self.list_results = tk.Listbox(master = self.root)
+                    self.list_results.place(x = 9, y = 31, width = 306, height = 70)
+                    self.list_active = True
+                
+                self.list_results.delete(0, tk.END)
+                if self.sv.get() not in decoded[1]:
+                    self.list_results.insert(tk.END, self.sv.get())
+                for w in decoded[1]:
+                    if self.list_results.size() == 4:
+                        break
+                    self.list_results.insert(tk.END, w)
+            else:
+                if self.list_active:
+                    self.list_results.destroy()
+                    self.list_active = False
+
+    def up(self, event):
+        if self.list_active:
+            if self.list_results.curselection() == ():
+                index = '4'
+            else:
+                index = self.list_results.curselection()[0]
+            if index != '-1':                        
+                self.list_results.selection_clear(first = index)
+                index = str(int(index) - 1)        
+                self.list_results.selection_set(first = index)
+                self.list_results.activate(index)
+                if self.list_results.curselection() == ():
+                    self.list_results.selection_clear(first = index)
+                    index = '3'
+                    self.list_results.selection_set(first = index)
+                    self.list_results.activate(index)
+    
+    def down(self, event):
+        if self.list_active:
+            if self.list_results.curselection() == ():
+                index = '-1'
+            else:
+                index = self.list_results.curselection()[0]
+            if index != '4':          
+                self.list_results.selection_clear(first = index)
+                index = str(int(index) + 1) 
+                self.list_results.selection_set(first = index)
+                self.list_results.activate(index)
+                if self.list_results.curselection() == ():
+                    self.list_results.selection_clear(first = index)
+                    index = '0'
+                    self.list_results.selection_set(first = index)
+                    self.list_results.activate(index)
+
+    def get_input(self, *args):
         global query
-        query = user_input.get()
-        window.destroy()
+        if self.list_results.curselection() != ():
+            query = self.list_results.get(self.list_results.curselection())
+        else:
+            query = self.user_input.get()
+        self.root.destroy()
 
-    def close(*args):
+    def close(self, *args):
         global query 
         query = ""
-        window.destroy()
+        self.root.destroy()
 
-    def on_focus_out(event):
-        if event.widget == user_input:
+    def on_focus_out(self, event):
+        if event.widget == self.user_input:
             global query 
             query = ""
-            window.destroy()
-
-
-    user_input.focus_set()
-    window.bind('<Return>', get_input)
-    window.bind('<Escape>', close)
-    window.bind("<FocusOut>", on_focus_out)
-
-    btn_search = tk.Button(master = form_entry,
-                           text = "Search",
-                           command = get_input)
-
-    user_input.grid(row = 0, column = 0, sticky = "e")
-    btn_search.grid(row = 0, column = 1, padx = 10)
-    form_entry.grid(row = 0, column = 0, padx = 10, pady = 10)
-
-    window.mainloop()
+            self.root.destroy()
 
 if __name__ == '__main__':
     icon = "favicon.ico"
@@ -236,23 +302,27 @@ if __name__ == '__main__':
     GGCOMBINATION = {keyboard.Key.alt_l, keyboard.KeyCode.from_char('z')}
     current = set()
 
-    def youtube_search(SysTrayIcon):
+    def youtube_search(*SysTrayIcon):
         global query
         global search_type
         current.clear()
         search_type = "Search Youtube"
-        search()
+        root = tk.Tk()
+        gui = Window(root)
+        root.mainloop()
         query.replace(" ", "+")
         if query != "":
             webbrowser.open('https://www.youtube.com/results?search_query=' + query, new=0)
         query = ""
 
-    def google_search(sysTrayIcon):
+    def google_search(*sysTrayIcon):
         global query
         global search_type
         current.clear()
         search_type = "Search Google"
-        search()
+        root = tk.Tk()
+        gui = Window(root)
+        root.mainloop()
         query.replace(" ", "+")
         if query != "":
             webbrowser.open('https://www.google.com/search?q=' + query, new=0)
@@ -267,21 +337,9 @@ if __name__ == '__main__':
         if key in YTCOMBINATION or key in GGCOMBINATION:
             current.add(key)
             if all(k in current for k in YTCOMBINATION):
-                current.clear()
-                search_type = "Search Youtube"
-                search()
-                query.replace(" ", "+")
-                if query != "":
-                    webbrowser.open('https://www.youtube.com/results?search_query=' + query, new=0)
-                query = ""
+                youtube_search()
             elif all(k in current for k in GGCOMBINATION):
-                current.clear()
-                search_type = "Search Google"
-                search()
-                query.replace(" ", "+")
-                if query != "":
-                    webbrowser.open('https://www.google.com/search?q=' + query, new=0)
-                query = ""
+                google_search()
 
     def on_release(key):
         try:

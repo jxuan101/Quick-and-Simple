@@ -15,8 +15,9 @@ Now that might not seem like a lot of steps but if you are anything like me, it 
 This program is written in Python 3.7.7 using the win32 api designed for use in Windows only.  
 
 Required Packages:  
-* [pywin32](https://pypi.org/project/pywin32/) - Python extensions for Microsoft Windows. Provides access to much of the Win32 API.
-* [pynput](https://pypi.org/project/pynput/) - A library for controlling and monitor input devices.
+* [pywin32](https://pypi.org/project/pywin32/) - Python extensions for Microsoft Windows. Provides access to much of the Win32 API. Provides much of the interface along with [tkinter](https://docs.python.org/3/library/tkinter.html) (included with Python).
+* [pynput](https://pypi.org/project/pynput/) - A library for controlling and monitor input devices. Provides hotkey functionality for the program. 
+* [requests](https://pypi.org/project/requests/) A HTTP library for Python. Provides access to the endpoint http://suggestqueries.google.com/complete/search for predictive searching capabilities.
   
 This program includes a requirements file for easy installation of the required packages using PyPI.  
 It is recommended that you install a virtual environment before installing requirements.   
@@ -35,4 +36,7 @@ These features are also available through the system tray icon.
 To quit the program, right click the system tray icon and select quit.  
   
 ## **Contributing**
-All contributions or feedback are welcomed.
+All contributions or feedback are welcomed.  
+  
+## **Credit**
+Based off Simon Brunning's [SysTrayIcon.py](http://www.brunningonline.net/simon/blog/archives/SysTrayIcon.py.html) sample system tray application.
